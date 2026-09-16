@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="JWT Lab — mint signed JWTs for API, OAuth, MCP and authorization testing." />
+  <title>JWT Lab — Tokens without the identity plumbing</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a class="brand" href="/"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M12 3l7 4v5c0 4.5-2.8 7.4-7 9-4.2-1.6-7-4.5-7-9V7l7-4z"/><path d="M9.5 12.5l1.7 1.7 3.6-4"/></svg></span> JWT Lab</a>
+    <div class="navlinks"><a href="#features">Features</a><a href="/docs">Docs</a><a href="/.well-known/jwks.json">JWKS</a><a class="button primary" href="/app">Open Lab</a></div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">⚡ Built for integration testing</span>
+        <h1>JWTs without the <span class="gradient-text">identity plumbing.</span></h1>
+        <p>Mint correctly signed test tokens in seconds. Choose a preset, edit any claim, and use the same issuer from your browser, scripts, APIs, or an MCP-enabled agent.</p>
+        <div class="hero-actions"><a class="button primary" href="/app">Issue a token →</a><a class="button ghost" href="/docs">View documentation</a></div>
+        <div class="trustline"><span>RS256 + public JWKS</span><span>OAuth metadata</span><span>MCP tools</span></div>
+      </div>
+      <div class="terminal-wrap">
+        <div class="terminal">
+          <div class="terminal-head"><div class="dots"><i class="dot"></i><i class="dot"></i><i class="dot"></i></div><span>POST /api/token</span></div>
+          <pre><span class="code-key">{</span>
+  <span class="code-str">"preset"</span>: <span class="code-green">"delegated-agent"</span>,
+  <span class="code-str">"claims"</span>: {
+    <span class="code-str">"sub"</span>: <span class="code-green">"alice"</span>,
+    <span class="code-str">"aud"</span>: <span class="code-green">"https://bank.example/mcp"</span>,
+    <span class="code-str">"scope"</span>: <span class="code-green">"portfolio.read"</span>,
+    <span class="code-str">"act"</span>: { <span class="code-str">"sub"</span>: <span class="code-green">"advisor-agent"</span> }
+  }
+<span class="code-key">}</span>
+
+<span class="code-str">→ 200</span>
+{
+  <span class="code-str">"access_token"</span>: <span class="code-green">"eyJhbGciOiJSUzI1NiIs..."</span>,
+  <span class="code-str">"token_type"</span>: <span class="code-green">"Bearer"</span>,
+  <span class="code-str">"expires_in"</span>: 3600
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-title"><span class="eyebrow">One issuer. Three interfaces.</span><h2>Spend time testing your product, not configuring an IdP.</h2><p>JWT Lab intentionally stops before becoming a full authorization server. Its job is to give you the token shape you need, signed by a stable issuer.</p></div>
+      <div class="grid3">
+        <article class="card"><div class="icon">✦</div><h3>Visual token lab</h3><p>Start from practical presets for users, workloads, MCP clients, delegated agents and negative tests. Then edit every claim as raw JSON.</p><span class="endpoint">/app</span></article>
+        <article class="card"><div class="icon">⌘</div><h3>Simple issuance API</h3><p>Automate tests with one POST. No clients, users, grants, redirect URIs or consent screens required.</p><span class="endpoint">POST /api/token</span></article>
+        <article class="card"><div class="icon">◈</div><h3>MCP-native</h3><p>Let an agent mint the exact token it needs while testing an API, gateway or MCP server. The same presets are exposed as MCP tools.</p><span class="endpoint">/mcp</span></article>
+        <article class="card"><div class="icon">🔑</div><h3>Stable validation</h3><p>Every token is RS256 signed and references a stable key id. Consumers validate with the public JWKS endpoint.</p><span class="endpoint">/.well-known/jwks.json</span></article>
+        <article class="card"><div class="icon">◎</div><h3>OAuth-shaped metadata</h3><p>Publish issuer and JWKS discovery information without pretending JWT Lab implements real login or grant flows.</p><span class="endpoint">/.well-known/oauth-authorization-server</span></article>
+        <article class="card"><div class="icon">↳</div><h3>Delegation scenarios</h3><p>Create token-exchange-style output using <span class="mono">act</span>, nested actors, reduced scopes and downstream audiences — without implementing token exchange.</p><span class="endpoint">preset: delegated-agent</span></article>
+      </div>
+    </section>
+
+    <section class="section"><div class="demo-strip"><div><h3>Need a token with weird claims right now?</h3><p>Open the lab, edit the payload, sign it, copy it. Done.</p></div><a class="button primary" href="/app">Open JWT Lab →</a></div></section>
+  </main>
+  <footer class="footer"><span>JWT Lab — testing only. Never trust these tokens in production.</span><span>Issuer: <span class="mono">https://jwt-lab.vercel.app</span></span></footer>
+</body>
+</html>

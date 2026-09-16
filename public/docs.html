@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>JWT Lab Docs</title><link rel="stylesheet" href="/styles.css"/></head><body>
+<nav class="nav"><a class="brand" href="/"><span class="logo">✦</span> JWT Lab</a><div class="navlinks"><a href="/app">Token Lab</a><a href="/.well-known/jwks.json">JWKS</a></div></nav>
+<main class="docs"><span class="eyebrow">Documentation</span><h1>JWT Lab API</h1><p>JWT Lab is intentionally not a complete OAuth authorization server. It is a test token mint: submit claims, receive a correctly signed RS256 JWT, and validate it against the published JWKS.</p>
+<h2>Issue a token</h2><pre>POST /api/token
+Content-Type: application/json
+
+{
+  "preset": "delegated-agent",
+  "claims": {
+    "sub": "alice",
+    "aud": "https://bank.example/mcp",
+    "scope": "portfolio.read",
+    "act": { "sub": "investment-advisor-agent" }
+  },
+  "expiresIn": 3600
+}</pre>
+<p>Preset claims are applied first; explicit <span class="mono">claims</span> override them. The service manages <span class="mono">iss</span>, <span class="mono">iat</span>, <span class="mono">exp</span> and <span class="mono">jti</span> unless <span class="mono">advanced: true</span> is supplied.</p>
+<h2>Discovery & validation</h2><pre>GET /.well-known/jwks.json
+GET /.well-known/oauth-authorization-server
+GET /.well-known/openid-configuration
+GET /api/presets</pre>
+<h2>Introspect a token</h2><pre>POST /api/introspect
+Content-Type: application/x-www-form-urlencoded
+
+token=eyJhbGciOiJSUzI1NiIs...
+
+{"active": true, "sub": "alice", "exp": 1767225600, ...}</pre>
+<p>RFC 7662 token introspection: JWT Lab verifies the signature (<span class="mono">RS256</span> against its published JWKS) and <span class="mono">exp</span>/<span class="mono">nbf</span> itself and returns an OAuth introspection response. Invalid, expired, tampered or malformed tokens return <span class="mono">{"active": false}</span> with no claim echo. The endpoint is unauthenticated: tokens are public-key-signed JWTs anyone holding them can decode, so introspection adds only the issuer's live validity opinion. Because JWT Lab is stateless, it can never report a valid token as revoked.</p>
+<h2>MCP</h2><p>Connect an MCP client to <span class="mono">https://jwt-lab.vercel.app/mcp</span>. The remote server exposes five tools:</p><pre>issue_token
+introspect_token
+list_presets
+get_jwks
+get_oauth_metadata</pre>
+<p>The MCP interface uses the same issuance engine as the UI and REST API, so an agent can mint a token and immediately inject it into whatever integration it is testing.</p>
+<h2>Vercel setup</h2><pre>npm install
+npm run generate:key
+
+# Add the printed JWT_PRIVATE_KEY_B64 value to Vercel.
+# Also set:
+JWT_ISSUER=https://jwt-lab.vercel.app
+JWT_KID=jwt-lab-rs256-1</pre>
+<p><strong>Important:</strong> keep the signing key stable. If a new Vercel instance generates a different key, a token minted by one invocation might not validate against JWKS served by another.</p>
+</main></body></html>

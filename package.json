@@ -1,0 +1,21 @@
+{
+  "name": "jwt-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A developer-friendly JWT mint with JWKS, OAuth metadata, presets and MCP support.",
+  "scripts": {
+    "dev": "node --watch src/local.js",
+    "start": "node src/local.js",
+    "generate:key": "node scripts/generate-key.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "express": "^5.1.0",
+    "jose": "^6.2.12",
+    "zod": "^3.25.0"
+  }
+}
