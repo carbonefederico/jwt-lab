@@ -1,0 +1,37 @@
+# Smoke test the deployed instance after Vercel finishes deploying main.
+#
+# No Vercel token is required: the Vercel GitHub app reports a commit
+# status (context "Vercel") on the pushed commit once its deployment
+# succeeds, and the git-main production alias then serves the new build.
+name: Smoke
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel deployment of this commit
+        run: |
+          for i in $(seq 1 60); do
+            status=$(curl -sf "https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/status" \
+              | python3 -c "import json,sys; d=json.load(sys.stdin); vercel=[s for s in d.get('statuses',[]) if s['context']=='Vercel']; print(vercel[0]['state'] if vercel else 'pending')")
+            case "$status" in
+              success) echo "Vercel deployment succeeded"; exit 0 ;;
+              failure|error) echo "Vercel deployment failed"; exit 1 ;;
+              *) echo "waiting for Vercel deployment (attempt $i): $status"; sleep 15 ;;
+            esac
+            if [ "$i" -eq 30 ]; then echo "Vercel deployment not ready after 30 attempts (~7.5min)"; exit 1; fi
+          done
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run smoke test against deployed instance
+        run: SMOKE_BASE_URL=https://jwt-lab-git-main-carbonefedericos-projects.vercel.app npm test

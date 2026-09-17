@@ -72,6 +72,13 @@ Tools:
 
 JWT Lab is intentionally unsafe as an identity system: anyone who can reach it can mint trusted test tokens. It is for development/testing only. Never configure a production resource server to trust the JWT Lab issuer.
 
+### CI
+
+Every push to `main` (and every pull request) runs in GitHub Actions:
+
+- **Smoke** — waits for the Vercel deployment of the pushed commit (via Vercel's commit status, no token needed), then runs the 37-check smoke suite against the live `git-main` deployment.
+- **Security** — CodeQL static analysis, gitleaks over the full git history, `npm audit --omit=dev --audit-level=high`, and (on PRs only) a dependency-review diff that fails on high-severity advisories. Also scheduled weekly.
+
 ## Preset reference
 
 | Category | Presets |
