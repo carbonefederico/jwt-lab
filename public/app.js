@@ -1,5 +1,6 @@
 const state = { presets: [], active: null, token: null };
 const el = (id) => document.getElementById(id);
+const EMPTY_RESULT = '<div class="result-empty"><div><div style="font-size:27px;margin-bottom:10px">◈</div>Issue a token to inspect the JWT and copy it into your test.</div></div>';
 
 async function loadPresets() {
   const response = await fetch('/api/presets');
@@ -10,13 +11,22 @@ async function loadPresets() {
   selectPreset('basic-user');
 }
 
+// Chip color tones by scenario type: red for negative tests, green for
+// delegation chains, blue for the SPIFFE profile, brand violet otherwise.
+function chipTone(preset) {
+  if (preset.category === 'Negative tests') return 'red';
+  if (preset.id === 'spiffe-jwt-svid') return 'blue';
+  if (preset.category === 'Delegation') return 'green';
+  return 'violet';
+}
+
 function renderPresets() {
   const root = el('presets');
   root.innerHTML = '';
   for (const preset of state.presets) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = `chip ${state.active === preset.id ? 'active' : ''}`;
+    button.className = `chip tone-${chipTone(preset)} ${state.active === preset.id ? 'active' : ''}`;
     button.dataset.id = preset.id;
     button.innerHTML = `${escapeHtml(preset.name)}<span class="tip"><strong>${escapeHtml(preset.category)}</strong>${escapeHtml(preset.description)}</span>`;
     button.addEventListener('click', () => selectPreset(preset.id));
@@ -28,9 +38,13 @@ function selectPreset(id) {
   const preset = state.presets.find((p) => p.id === id);
   if (!preset) return;
   state.active = id;
+  state.token = null;
   el('presetId').value = id;
   el('claims').value = JSON.stringify(preset.claims, null, 2);
   el('ttl').value = preset.options?.expiresIn ?? 3600;
+  el('advanced').checked = false;
+  el('copyBtn').disabled = true;
+  el('result').innerHTML = EMPTY_RESULT;
   renderPresets();
 }
 
@@ -85,7 +99,10 @@ function escapeHtml(value) {
 }
 
 el('issueBtn').addEventListener('click', issue);
-el('resetBtn').addEventListener('click', () => selectPreset(state.active || 'basic-user'));
+el('resetBtn').addEventListener('click', () => {
+  if (!state.active) return;
+  selectPreset(state.active);
+});
 el('copyBtn').addEventListener('click', async () => {
   if (!state.token) return;
   await navigator.clipboard.writeText(state.token);

@@ -18,7 +18,7 @@ Content-Type: application/json
 <h2>Preset categories</h2>
 <p><strong>Core</strong> — user and workload (<span class="mono">client_credentials</span>-shaped) access tokens. <strong>MCP</strong> — tokens audience-bound to an MCP server per the MCP authorization spec, with <span class="mono">sub</span> for the principal and <span class="mono">client_id</span> for the OAuth client. <strong>Delegation</strong> — RFC 8693 token-exchange output shapes with <span class="mono">act</span> chains: authorize on <span class="mono">sub</span> plus the outermost actor only.</p>
 <p><strong>Token profiles</strong> — spec-shaped tokens with their mandated <span class="mono">typ</span> headers set automatically:</p>
-<pre>rfc9068-access-token → typ: at+jwt            (required: iss, exp, aud, sub, client_id, iat, jti)
+<pre>basic-user           → typ: at+jwt            (RFC 9068 required: iss, exp, aud, sub, client_id, iat, jti)
 spiffe-jwt-svid      → SPIFFE JWT-SVID        (sub is a SPIFFE ID; 5-minute lifetime; only sub, aud, exp required)
 transaction-token    → typ: txntoken+jwt      (required: txn, sub, aud=trust domain, scope, req_wl)
 id-jag               → typ: oauth-id-jag+jwt  (aud is the resource authorization server; client_id required)</pre>

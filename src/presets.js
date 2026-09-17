@@ -61,19 +61,6 @@ export const presets = [
 
   // ---------- Token profiles ----------
   {
-    id: 'rfc9068-access-token',
-    name: 'JWT access token (RFC 9068)',
-    category: 'Token profiles',
-    description: 'The RFC 9068 JWT access-token profile: typ at+jwt in the header plus required iss, exp, aud, sub, client_id, iat and jti (added automatically).',
-    header: { typ: 'at+jwt' },
-    claims: {
-      sub: 'alice',
-      client_id: 'desktop-client',
-      aud: 'https://api.example.com',
-      scope: 'orders.read orders.write'
-    }
-  },
-  {
     id: 'spiffe-jwt-svid',
     name: 'SPIFFE JWT-SVID (SPIRE)',
     category: 'Token profiles',

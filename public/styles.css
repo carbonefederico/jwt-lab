@@ -77,11 +77,18 @@ code, pre, textarea, .mono { font-family: "SFMono-Regular", Consolas, "Liberatio
 .app-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:15px; align-items:start; }
 .chips { display:flex; flex-wrap:wrap; gap:7px; }
 .chip { position:relative; border:1px solid var(--border); background:rgba(255,255,255,.03); color:#d6d9ec; border-radius:999px; padding:6px 13px; font-size:13.5px; font-weight:600; cursor:pointer; transition:.15s ease; }
-.chip:hover { background:rgba(131,91,255,.13); border-color:rgba(139,92,246,.35); color:white; }
-.chip.active { background:rgba(131,91,255,.19); border-color:rgba(139,92,246,.5); color:white; }
 .chip .tip { display:none; position:absolute; z-index:20; top:calc(100% + 8px); left:0; width:340px; max-width:72vw; padding:10px 12px; border:1px solid rgba(255,255,255,.14); background:var(--panel-solid); border-radius:10px; color:#c3c8e2; font-size:12.5px; font-weight:400; line-height:1.5; text-align:left; box-shadow:0 16px 44px rgba(0,0,0,.45); }
 .chip .tip strong { display:block; color:white; font-size:13px; margin-bottom:3px; }
 .chip:hover .tip, .chip:focus-visible .tip { display:block; }
+.chip.tone-violet { border-color:rgba(139,92,246,.3); background:rgba(139,92,246,.09); color:#cdbcfa; }
+.chip.tone-violet:hover, .chip.tone-violet.active { border-color:rgba(139,92,246,.6); background:rgba(139,92,246,.22); color:white; }
+.chip.tone-red { border-color:rgba(255,112,141,.32); background:rgba(255,112,141,.08); color:#ffb3c1; }
+.chip.tone-red:hover, .chip.tone-red.active { border-color:rgba(255,112,141,.65); background:rgba(255,112,141,.2); color:white; }
+.chip.tone-green { border-color:rgba(88,230,178,.3); background:rgba(88,230,178,.08); color:#a8ecd4; }
+.chip.tone-green:hover, .chip.tone-green.active { border-color:rgba(88,230,178,.6); background:rgba(88,230,178,.2); color:white; }
+.chip.tone-blue { border-color:rgba(98,140,255,.34); background:rgba(98,140,255,.1); color:#b9cbff; }
+.chip.tone-blue:hover, .chip.tone-blue.active { border-color:rgba(98,140,255,.65); background:rgba(98,140,255,.24); color:white; }
+.chip.tone-violet .tip strong { color:#cdbcfa; }.chip.tone-red .tip strong { color:#ffb3c1; }.chip.tone-green .tip strong { color:#a8ecd4; }.chip.tone-blue .tip strong { color:#b9cbff; }
 .panel { border:1px solid var(--border); background:var(--panel); border-radius:16px; overflow:hidden; backdrop-filter:blur(14px); box-shadow:0 14px 46px rgba(0,0,0,.16); }
 .panel-head { padding:16px 17px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
 .panel-head h2 { font-size:15.5px; margin:0; letter-spacing:.01em; }.panel-body{padding:16px}

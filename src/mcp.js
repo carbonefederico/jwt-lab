@@ -43,7 +43,7 @@ function buildServer() {
     title: 'List JWT presets',
     description: 'List built-in JWT testing scenarios and their default claims.',
     inputSchema: {}
-  }, async () => result(presets));
+  }, async () => result({ presets }));
 
   server.registerTool('get_jwks', {
     title: 'Get JWKS',
