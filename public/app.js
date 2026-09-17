@@ -13,19 +13,12 @@ async function loadPresets() {
 function renderPresets() {
   const root = el('presets');
   root.innerHTML = '';
-  let currentCategory = '';
   for (const preset of state.presets) {
-    if (preset.category !== currentCategory) {
-      currentCategory = preset.category;
-      const category = document.createElement('div');
-      category.className = 'category';
-      category.textContent = currentCategory;
-      root.appendChild(category);
-    }
     const button = document.createElement('button');
-    button.className = `preset ${state.active === preset.id ? 'active' : ''}`;
+    button.type = 'button';
+    button.className = `chip ${state.active === preset.id ? 'active' : ''}`;
     button.dataset.id = preset.id;
-    button.innerHTML = `<strong>${escapeHtml(preset.name)}</strong><span>${escapeHtml(preset.description)}</span>`;
+    button.innerHTML = `${escapeHtml(preset.name)}<span class="tip"><strong>${escapeHtml(preset.category)}</strong>${escapeHtml(preset.description)}</span>`;
     button.addEventListener('click', () => selectPreset(preset.id));
     root.appendChild(button);
   }

@@ -24,32 +24,6 @@ export const presets = [
     }
   },
 
-  // ---------- MCP ----------
-  {
-    id: 'mcp-user',
-    name: 'MCP user access token',
-    category: 'MCP',
-    description: 'A user token audience-bound to an MCP server (RFC 8707 resource binding). sub is the user; client_id is the OAuth client the user signed in from. MCP requires the aud to match the MCP server.',
-    claims: {
-      sub: 'alice',
-      client_id: 'desktop-client',
-      aud: 'https://mcp.example.com',
-      scope: 'customers.read transactions.read'
-    }
-  },
-  {
-    id: 'mcp-agent',
-    name: 'MCP agent identity',
-    category: 'MCP',
-    description: 'An autonomous agent acting as a first-party client: sub and client_id are the agent itself (client_credentials shape), no user. MCP still requires audience binding.',
-    claims: {
-      sub: 'investment-advisor-agent',
-      client_id: 'investment-advisor-agent',
-      aud: 'https://mcp.example.com',
-      scope: 'portfolio.read market.read'
-    }
-  },
-
   // ---------- Delegation (RFC 8693) ----------
   {
     id: 'delegated-agent',

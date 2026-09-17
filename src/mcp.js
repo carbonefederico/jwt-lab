@@ -23,7 +23,7 @@ function buildServer() {
     title: 'Issue JWT',
     description: 'Mint an RS256 JWT for testing. Claims are arbitrary. You can start from a JWT Lab preset and override any normal claim.',
     inputSchema: {
-      preset: z.string().optional().describe('Optional preset id, for example mcp-user or delegated-agent.'),
+      preset: z.string().optional().describe('Optional preset id, for example basic-user or delegated-agent.'),
       claims: z.record(z.any()).optional().describe('JWT payload claims to add or override.'),
       expiresIn: z.number().int().optional().describe('Lifetime in seconds. Negative values intentionally create expired tokens.'),
       advanced: z.boolean().optional().describe('Allow overriding reserved claims such as iss, iat, exp, nbf and jti.'),

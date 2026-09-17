@@ -7,9 +7,9 @@
   <div class="app-header"><div><h1>Token Lab</h1><p>Choose a scenario, edit the payload and mint a signed JWT.</p></div><div class="toolbar"><button class="button small ghost" id="resetBtn">Reset</button><button class="button small primary" id="issueBtn">Issue token</button></div></div>
   <div class="notice">Testing only. JWT Lab deliberately makes token issuance easy. Do not configure production systems to trust this issuer.</div>
   <div class="app-grid">
-    <section class="panel"><div class="panel-head"><h2>Presets</h2><span class="mono" style="font-size:11.5px;color:#70789b" id="presetCount"></span></div><div class="panel-body"><div class="presets" id="presets"></div></div></section>
-    <section class="panel"><div class="panel-head"><h2>JWT payload</h2><span class="mono" style="font-size:11.5px;color:#70789b">RS256</span></div><div class="panel-body">
-      <div class="row"><div class="field"><label>Lifetime (seconds)</label><input class="input" id="ttl" type="number" value="3600"/></div><div class="field"><label>Preset</label><input class="input" id="presetId" value="basic-user" readonly/></div></div>
+    <section class="panel"><div class="panel-head"><h2>JWT payload</h2><span class="mono" id="presetCount"></span></div><div class="panel-body">
+      <div class="field"><label>Preset <span style="font-weight:400;color:#70789b">— hover a name for details</span></label><div class="chips" id="presets"></div></div>
+      <div class="row"><div class="field"><label>Lifetime (seconds)</label><input class="input" id="ttl" type="number" value="3600"/></div><div class="field"><label>Preset id</label><input class="input" id="presetId" value="basic-user" readonly/></div></div>
       <div class="field"><label>Claims <span style="font-weight:400;color:#70789b">— set a claim to null to drop a preset default</span></label><textarea id="claims" spellcheck="false"></textarea></div>
       <div class="toolbar"><label class="switch"><input id="advanced" type="checkbox"/> Advanced: allow iss / iat / exp / nbf / jti overrides</label></div>
     </div></section>

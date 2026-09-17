@@ -77,7 +77,6 @@ JWT Lab is intentionally unsafe as an identity system: anyone who can reach it c
 | Category | Presets |
 |---|---|
 | Core | `basic-user`, `machine-client` (client_credentials shape, RFC 9068 claims) |
-| MCP | `mcp-user`, `mcp-agent` (audience-bound to the MCP server) |
 | Delegation | `delegated-agent`, `nested-delegation` (RFC 8693 `act` chains) |
 | Token profiles | `rfc9068-access-token` (`typ: at+jwt`), `spiffe-jwt-svid`, `transaction-token` (`typ: txntoken+jwt`, auto-generated `txn`), `id-jag` (`typ: oauth-id-jag+jwt`) |
 | Negative tests | `missing-scope` (403), `wrong-audience`, `wrong-issuer`, `expired`, `not-yet-valid` (401 / `active: false`) |
