@@ -1,5 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>JWT Lab Docs</title><link rel="stylesheet" href="/styles.css"/></head><body>
-<nav class="nav"><a class="brand" href="/"><span class="logo">✦</span> JWT Lab</a><div class="navlinks"><a href="/app">Token Lab</a><a href="/.well-known/jwks.json">JWKS</a></div></nav>
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>JWT Lab Docs</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><link rel="stylesheet" href="/styles.css"/></head><body>
+<nav class="nav"><a class="brand" href="/"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8"><path d="M12 3l7 4v5c0 4.5-2.8 7.4-7 9-4.2-1.6-7-4.5-7-9V7l7-4z"/><path d="M9.5 12.5l1.7 1.7 3.6-4"/></svg></span> JWT Lab</a><div class="navlinks"><a href="/app">Token Lab</a><a href="/.well-known/jwks.json">JWKS</a></div></nav>
 <main class="docs"><span class="eyebrow">Documentation</span><h1>JWT Lab API</h1><p>JWT Lab is intentionally not a complete OAuth authorization server. It is a test token mint: submit claims, receive a correctly signed RS256 JWT, and validate it against the published JWKS.</p>
 <h2>Issue a token</h2><pre>POST /api/token
 Content-Type: application/json

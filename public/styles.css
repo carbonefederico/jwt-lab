@@ -43,7 +43,7 @@ code, pre, textarea, .mono { font-family: "SFMono-Regular", Consolas, "Liberatio
 .button.small { padding:9px 13px; border-radius:9px; font-size:14px; }
 .hero { max-width:1180px; margin:0 auto; padding:96px 24px 108px; display:grid; grid-template-columns:1.05fr .95fr; gap:68px; align-items:center; position:relative; }
 .eyebrow { display:inline-flex; gap:8px; align-items:center; border:1px solid rgba(153,110,255,.28); color:#c8b5ff; background:rgba(119,76,255,.08); border-radius:999px; padding:8px 12px; font-size:12px; font-weight:750; text-transform:uppercase; letter-spacing:.08em; }
-.hero h1 { font-size:67px; line-height:.98; letter-spacing:-.055em; margin:20px 0 22px; max-width:680px; }
+.hero h1 { font-size:67px; line-height:1.02; letter-spacing:-.02em; margin:20px 0 22px; max-width:680px; }
 .gradient-text { background:linear-gradient(100deg,#6796ff 10%,#9d66ff 55%,#cf51f3); -webkit-background-clip:text; color:transparent; }
 .hero p { color:var(--muted); font-size:19px; line-height:1.65; max-width:650px; margin:0 0 30px; }
 .hero-actions { display:flex; gap:12px; flex-wrap:wrap; }
