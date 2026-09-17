@@ -22,7 +22,7 @@ Content-Type: application/json
 spiffe-jwt-svid      → SPIFFE JWT-SVID        (sub is a SPIFFE ID; 5-minute lifetime; only sub, aud, exp required)
 transaction-token    → typ: txntoken+jwt      (required: txn, sub, aud=trust domain, scope, req_wl)
 id-jag               → typ: oauth-id-jag+jwt  (aud is the resource authorization server; client_id required)</pre>
-<p><strong>Negative tests</strong> — validly signed tokens a conforming resource server must reject: insufficient scope (expect 403 <span class="mono">insufficient_scope</span>, RFC 6750), wrong audience, wrong issuer, expired and not-yet-valid (expect 401 <span class="mono">invalid_token</span>; introspection returns <span class="mono">active: false</span>). <strong>Edge cases</strong> — multi-valued <span class="mono">aud</span> arrays.</p>
+<p><strong>Negative tests</strong> — validly signed tokens a conforming resource server must reject: expired and not-yet-valid (expect 401 <span class="mono">invalid_token</span>; introspection returns <span class="mono">active: false</span>). Other rejections (wrong <span class="mono">iss</span>, unbound <span class="mono">aud</span>, insufficient <span class="mono">scope</span>) are one claim edit away — set any claims you want in the payload. <strong>Edge cases</strong> — multi-valued <span class="mono">aud</span> arrays.</p>
 <h2>Discovery & validation</h2><pre>GET /.well-known/jwks.json
 GET /.well-known/oauth-authorization-server
 GET /.well-known/openid-configuration

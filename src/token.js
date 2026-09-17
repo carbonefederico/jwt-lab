@@ -20,8 +20,8 @@ export async function issueToken({ claims = {}, preset, expiresIn, advanced = fa
   if (preset && !basePreset) throw new Error(`Unknown preset: ${preset}`);
 
   const presetOptions = basePreset?.options || {};
-  // Presets that need reserved claims themselves (e.g. the wrong-issuer
-  // negative test) opt in via options.advanced; the caller can pass
+  // Presets that need reserved claims themselves opt in via
+  // options.advanced; the caller can pass
   // advanced as usual. Caller-supplied reserved keys still require
   // advanced even on an advanced preset — only the preset's own claims
   // are exempt.

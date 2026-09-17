@@ -106,41 +106,6 @@ export const presets = [
 
   // ---------- Negative tests ----------
   {
-    id: 'missing-scope',
-    name: 'Insufficient scope',
-    category: 'Negative tests',
-    description: 'Valid signature and audience, but scope (payments.read) does not cover what the RS requires (e.g. payments.write). Expect 403 insufficient_scope (RFC 6750): an authorization failure, not a token failure.',
-    claims: {
-      sub: 'alice',
-      aud: 'https://mcp.example.com',
-      scope: 'payments.read'
-    }
-  },
-  {
-    id: 'wrong-audience',
-    name: 'Wrong audience',
-    category: 'Negative tests',
-    description: 'A validly signed token minted for a different resource server. Audience binding (RFC 8707 / RFC 9068 / MCP authorization) requires the RS to reject it with 401 invalid_token.',
-    claims: {
-      sub: 'alice',
-      aud: 'https://wrong-resource.example.com',
-      scope: 'customers.read'
-    }
-  },
-  {
-    id: 'wrong-issuer',
-    name: 'Wrong issuer',
-    category: 'Negative tests',
-    description: 'Signed with the JWT Lab key but claims a different iss. A conforming RS only trusts its configured issuer and rejects with 401 invalid_token; introspection returns active: false.',
-    claims: {
-      iss: 'https://attacker.example.com',
-      sub: 'alice',
-      aud: 'https://api.example.com',
-      scope: 'profile.read'
-    },
-    options: { advanced: true }
-  },
-  {
     id: 'expired',
     name: 'Expired token',
     category: 'Negative tests',

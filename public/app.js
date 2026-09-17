@@ -55,7 +55,7 @@ async function issue() {
 
   const preset = state.presets.find((p) => p.id === state.active);
   const presetClaims = JSON.stringify(preset?.claims ?? {});
-  // Claims the preset itself owns (e.g. iss in the wrong-issuer test) don't
+  // Claims the preset itself owns (e.g. iss in a preset that sets it) don't
   // need the advanced toggle; user-added reserved claims do.
   const needsAdvanced = Object.keys(claims).some((key) =>
     ['iss', 'iat', 'exp', 'nbf', 'jti'].includes(key) && !(preset && key in preset.claims)

@@ -1,8 +1,12 @@
 # JWT Lab
 
-A deliberately small test token issuer for API, OAuth-shaped, MCP and authorization testing.
+When I build or test something that consumes tokens (an API, a gateway, an MCP server, a policy enforcement point, etc.), I need valid tokens. Real RS256 JWTs with the right `aud`, `scope`, and `act` claims, signed by an issuer the resource server can verify against a JWKS.
 
-- Beautiful web UI with presets and arbitrary JSON claims
+Real identity providers can do this, but they are heavy when the IdP is only a dependency. Issuing a token with the claims I want usually means registering clients, configuring signing keys and mappings, and having the environment reachable. That is worth it when I am testing the IdP itself. It is slow when what I actually want to test is the resource server, the gateway policy, or how an agent handles an actor chain.
+
+JWT Lab is a test token mint: submit claims, receive a correctly signed RS256 JWT, and validate it against the published JWKS. It is deliberately not an authorization server. There are no grants, no sign-in, no consent, no client registration. Tokens are stateless and the issuer never sees who requested them.
+
+- Web UI with presets and arbitrary JSON claims
 - `POST /api/token`
 - RS256 signatures + stable `kid`
 - `/.well-known/jwks.json`
@@ -78,6 +82,6 @@ JWT Lab is intentionally unsafe as an identity system: anyone who can reach it c
 |---|---|
 | Core | `basic-user` (conforming JWT access-token shape, RFC 9068), `machine-client` (client_credentials shape, RFC 9068 claims) |
 | Delegation | `delegated-agent`, `nested-delegation` (RFC 8693 `act` chains) |
-| Token profiles | `spiffe-jwt-svid`, `transaction-token` (`typ: txntoken+jwt`, auto-generated `txn`), `id-jag` (`typ: oauth-id-jag+jwt`) |
-| Negative tests | `missing-scope` (403), `wrong-audience`, `wrong-issuer`, `expired`, `not-yet-valid` (401 / `active: false`) |
+| Token profiles | `rfc9068-access-token` (`typ: at+jwt`), `spiffe-jwt-svid`, `transaction-token` (`typ: txntoken+jwt`, auto-generated `txn`), `id-jag` (`typ: oauth-id-jag+jwt`) |
+| Negative tests | `expired`, `not-yet-valid` (401 / `active: false`) |
 | Edge cases | `multi-audience` (aud array) |
