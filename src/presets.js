@@ -4,9 +4,11 @@ export const presets = [
     id: 'basic-user',
     name: 'Basic user token',
     category: 'Core',
-    description: 'A minimal user access token: sub is the user, aud the target API, scope the delegated permissions.',
+    description: 'A minimal user access token: sub is the user, client_id the OAuth client, aud the target API, scope the delegated permissions. Conforming JWT access-token shape (RFC 9068): typ at+jwt plus required iss, sub, client_id, aud, iat, exp and jti.',
+    header: { typ: 'at+jwt' },
     claims: {
       sub: 'alice',
+      client_id: 'desktop-client',
       aud: 'https://api.example.com',
       scope: 'profile.read orders.read'
     }
