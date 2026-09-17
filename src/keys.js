@@ -9,8 +9,8 @@ function loadPem() {
     return Buffer.from(configured, 'base64').toString('utf8');
   }
 
-  if (process.env.VERCEL_ENV === 'production') {
-    throw new Error('JWT_PRIVATE_KEY_B64 is required in production. Run `npm run generate:key` and add it to Vercel Environment Variables.');
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
+    throw new Error('JWT_PRIVATE_KEY_B64 is required in production. Run `npm run generate:key` and set JWT_PRIVATE_KEY_B64 in the hosting environment.');
   }
 
   console.warn('[jwt-lab] JWT_PRIVATE_KEY_B64 not set; generating an ephemeral development key. Tokens may stop validating after restart.');

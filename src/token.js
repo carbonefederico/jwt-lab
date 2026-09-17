@@ -3,7 +3,13 @@ import { SignJWT, decodeJwt, decodeProtectedHeader } from 'jose';
 import { getKeyMaterial } from './keys.js';
 import { getPreset } from './presets.js';
 
-export const ISSUER = process.env.JWT_ISSUER || 'https://jwt-lab.vercel.app';
+// Canonical issuer. Host-agnostic: JWT_ISSUER overrides; otherwise the
+// issuer is derived from the request origin so any deployment URL works.
+export const ISSUER = process.env.JWT_ISSUER || '';
+const FALLBACK_ISSUER = 'http://localhost:3000';
+export function resolveIssuer(origin) {
+  return ISSUER || origin || FALLBACK_ISSUER;
+}
 const DEFAULT_TTL = Number(process.env.JWT_DEFAULT_TTL || 3600);
 
 const RESERVED = new Set(['iss', 'iat', 'exp', 'nbf', 'jti']);
@@ -15,7 +21,7 @@ function cleanClaims(input = {}, allowReserved = false) {
   );
 }
 
-export async function issueToken({ claims = {}, preset, expiresIn, advanced = false, header = {} } = {}) {
+export async function issueToken({ claims = {}, preset, expiresIn, advanced = false, header = {}, origin } = {}) {
   const basePreset = preset ? getPreset(preset) : undefined;
   if (preset && !basePreset) throw new Error(`Unknown preset: ${preset}`);
 
@@ -72,8 +78,10 @@ export async function issueToken({ claims = {}, preset, expiresIn, advanced = fa
 
   let jwt = new SignJWT(cleanClaims(mergedClaims, allowAdvanced)).setProtectedHeader(protectedHeader);
 
+  const issuer = resolveIssuer(origin);
+
   if (allowAdvanced && mergedClaims.iss !== undefined) jwt = jwt.setIssuer(String(mergedClaims.iss));
-  else jwt = jwt.setIssuer(ISSUER);
+  else jwt = jwt.setIssuer(issuer);
 
   if (allowAdvanced && mergedClaims.iat !== undefined) jwt = jwt.setIssuedAt(Number(mergedClaims.iat));
   else jwt = jwt.setIssuedAt(now);
@@ -94,7 +102,7 @@ export async function issueToken({ claims = {}, preset, expiresIn, advanced = fa
     token_type: 'Bearer',
     expires_in: ttl,
     issuer: decodeJwt(token).iss,
-    jwks_uri: `${ISSUER}/.well-known/jwks.json`,
+    jwks_uri: `${issuer}/.well-known/jwks.json`,
     decoded: {
       header: decodeProtectedHeader(token),
       payload: decodeJwt(token)

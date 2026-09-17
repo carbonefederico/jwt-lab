@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { issueToken, ISSUER } from './token.js';
+import { issueToken, resolveIssuer } from './token.js';
 import { introspectToken } from './introspect.js';
 import { getKeyMaterial } from './keys.js';
 import { presets } from './presets.js';
@@ -15,6 +15,15 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false }));
 
+// Behind proxies (serverless, gateways) the public scheme lives in
+// x-forwarded-proto; otherwise use the request protocol.
+function originOf(req) {
+  const host = req.get('host');
+  if (!host) return undefined;
+  const proto = req.get('x-forwarded-proto')?.split(',')[0] || req.protocol;
+  return `${proto}://${host}`;
+}
+
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, MCP-Protocol-Version, MCP-Session-Id');
@@ -23,12 +32,12 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('/api/health', (_req, res) => res.json({ ok: true, issuer: ISSUER }));
+app.get('/api/health', (req, res) => res.json({ ok: true, issuer: resolveIssuer(originOf(req)) }));
 app.get('/api/presets', (_req, res) => res.json({ presets }));
 
 app.post('/api/token', async (req, res) => {
   try {
-    const result = await issueToken(req.body || {});
+    const result = await issueToken({ ...(req.body || {}), origin: originOf(req) });
     res.json(result);
   } catch (error) {
     res.status(400).json({ error: 'invalid_request', error_description: error.message });
@@ -57,34 +66,36 @@ app.get('/.well-known/jwks.json', async (_req, res, next) => {
   }
 });
 
-app.get('/.well-known/oauth-authorization-server', (_req, res) => {
+app.get('/.well-known/oauth-authorization-server', (req, res) => {
+  const issuer = resolveIssuer(originOf(req));
   res.json({
-    issuer: ISSUER,
-    jwks_uri: `${ISSUER}/.well-known/jwks.json`,
-    introspection_endpoint: `${ISSUER}/api/introspect`,
+    issuer,
+    jwks_uri: `${issuer}/.well-known/jwks.json`,
+    introspection_endpoint: `${issuer}/api/introspect`,
     scopes_supported: ['openid', 'profile', 'email', 'offline_access'],
     token_endpoint_auth_methods_supported: [],
     id_token_signing_alg_values_supported: ['RS256'],
     jwt_lab: {
-      token_issuance_api: `${ISSUER}/api/token`,
-      presets_api: `${ISSUER}/api/presets`,
-      mcp_endpoint: `${ISSUER}/mcp`,
+      token_issuance_api: `${issuer}/api/token`,
+      presets_api: `${issuer}/api/presets`,
+      mcp_endpoint: `${issuer}/mcp`,
       note: 'JWT Lab intentionally does not implement OAuth authorization or grant flows.'
     }
   });
 });
 
-app.get('/.well-known/openid-configuration', (_req, res) => {
+app.get('/.well-known/openid-configuration', (req, res) => {
+  const issuer = resolveIssuer(originOf(req));
   res.json({
-    issuer: ISSUER,
-    jwks_uri: `${ISSUER}/.well-known/jwks.json`,
-    introspection_endpoint: `${ISSUER}/api/introspect`,
+    issuer,
+    jwks_uri: `${issuer}/.well-known/jwks.json`,
+    introspection_endpoint: `${issuer}/api/introspect`,
     response_types_supported: [],
     subject_types_supported: ['public'],
     id_token_signing_alg_values_supported: ['RS256'],
     jwt_lab: {
-      token_issuance_api: `${ISSUER}/api/token`,
-      mcp_endpoint: `${ISSUER}/mcp`,
+      token_issuance_api: `${issuer}/api/token`,
+      mcp_endpoint: `${issuer}/mcp`,
       note: 'Compatibility metadata only. JWT Lab is not a complete OpenID Provider.'
     }
   });

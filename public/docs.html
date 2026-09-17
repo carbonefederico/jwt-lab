@@ -34,18 +34,18 @@ token=eyJhbGciOiJSUzI1NiIs...
 
 {"active": true, "sub": "alice", "exp": 1767225600, ...}</pre>
 <p>RFC 7662 token introspection: JWT Lab verifies the signature (<span class="mono">RS256</span> against its published JWKS) and <span class="mono">exp</span>/<span class="mono">nbf</span> itself and returns an OAuth introspection response. Invalid, expired, tampered or malformed tokens return <span class="mono">{"active": false}</span> with no claim echo. The endpoint is unauthenticated: tokens are public-key-signed JWTs anyone holding them can decode, so introspection adds only the issuer's live validity opinion. Because JWT Lab is stateless, it can never report a valid token as revoked.</p>
-<h2>MCP</h2><p>Connect an MCP client to <span class="mono">https://jwt-lab.vercel.app/mcp</span>. The remote server exposes five tools:</p><pre>issue_token
+<h2>MCP</h2><p>Connect an MCP client to <span class="mono">&lt;your-lab-host&gt;/mcp</span>. The remote server exposes five tools:</p><pre>issue_token
 introspect_token
 list_presets
 get_jwks
 get_oauth_metadata</pre>
 <p>The MCP interface uses the same issuance engine as the UI and REST API, so an agent can mint a token and immediately inject it into whatever integration it is testing.</p>
-<h2>Vercel setup</h2><pre>npm install
+<h2>Hosting setup</h2><p>JWT Lab is host-agnostic: it runs on any Node environment (serverless, container or plain process). Configure the environment before serving traffic:</p><pre>npm install
 npm run generate:key
 
-# Add the printed JWT_PRIVATE_KEY_B64 value to Vercel.
+# Set the printed JWT_PRIVATE_KEY_B64 value in the hosting environment.
 # Also set:
-JWT_ISSUER=https://jwt-lab.vercel.app
+JWT_ISSUER=https://your-lab.example.com
 JWT_KID=jwt-lab-rs256-1</pre>
-<p><strong>Important:</strong> keep the signing key stable. If a new Vercel instance generates a different key, a token minted by one invocation might not validate against JWKS served by another.</p>
+<p><strong>Important:</strong> keep the signing key stable. If an instance generates a different key, a token minted by one invocation might not validate against JWKS served by another.</p>
 </main></body></html>
