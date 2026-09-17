@@ -18,6 +18,16 @@ export async function issueToken({ claims = {}, preset, expiresIn, advanced = fa
   const basePreset = preset ? getPreset(preset) : undefined;
   if (preset && !basePreset) throw new Error(`Unknown preset: ${preset}`);
 
+  if (!advanced) {
+    const reservedKeys = Object.keys(claims).filter((key) => RESERVED.has(key));
+    if (reservedKeys.length > 0) {
+      throw new Error(
+        `Reserved claim(s) ${reservedKeys.map((key) => `'${key}'`).join(', ')} cannot be set directly. ` +
+        `Pass advanced: true to override reserved claims (${[...RESERVED].join(', ')}).`
+      );
+    }
+  }
+
   const mergedClaims = {
     ...(basePreset?.claims || {}),
     ...claims
@@ -52,7 +62,7 @@ export async function issueToken({ claims = {}, preset, expiresIn, advanced = fa
     access_token: token,
     token_type: 'Bearer',
     expires_in: ttl,
-    issuer: advanced && mergedClaims.iss ? mergedClaims.iss : ISSUER,
+    issuer: decodeJwt(token).iss,
     jwks_uri: `${ISSUER}/.well-known/jwks.json`,
     decoded: {
       header: decodeProtectedHeader(token),
