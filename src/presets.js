@@ -29,7 +29,7 @@ export const presets = [
     description: 'A user token targeted at an MCP server with tool-oriented scopes.',
     claims: {
       sub: 'alice',
-      client_id: 'claude-desktop',
+      client_id: 'desktop-client',
       aud: 'https://mcp.example.com',
       scope: 'customers.read transactions.read'
     }
