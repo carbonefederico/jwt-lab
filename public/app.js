@@ -46,12 +46,25 @@ async function issue() {
   try { claims = JSON.parse(el('claims').value); }
   catch { return showError('Claims must be valid JSON.'); }
 
+  const preset = state.presets.find((p) => p.id === state.active);
+  const presetClaims = JSON.stringify(preset?.claims ?? {});
+  // Claims the preset itself owns (e.g. iss in the wrong-issuer test) don't
+  // need the advanced toggle; user-added reserved claims do.
+  const needsAdvanced = Object.keys(claims).some((key) =>
+    ['iss', 'iat', 'exp', 'nbf', 'jti'].includes(key) && !(preset && key in preset.claims)
+  );
+
   el('issueBtn').disabled = true;
   el('issueBtn').textContent = 'Issuing…';
   try {
     const response = await fetch('/api/token', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ claims, expiresIn: Number(el('ttl').value), advanced: el('advanced').checked })
+      body: JSON.stringify({
+        preset: state.active,
+        claims,
+        expiresIn: Number(el('ttl').value),
+        advanced: el('advanced').checked || needsAdvanced
+      })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error_description || 'Token issuance failed');

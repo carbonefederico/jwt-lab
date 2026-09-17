@@ -10,7 +10,7 @@
     <section class="panel"><div class="panel-head"><h2>Presets</h2><span class="mono" style="font-size:10px;color:#70789b" id="presetCount"></span></div><div class="panel-body"><div class="presets" id="presets"></div></div></section>
     <section class="panel"><div class="panel-head"><h2>JWT payload</h2><span class="mono" style="font-size:10px;color:#70789b">RS256</span></div><div class="panel-body">
       <div class="row"><div class="field"><label>Lifetime (seconds)</label><input class="input" id="ttl" type="number" value="3600"/></div><div class="field"><label>Preset</label><input class="input" id="presetId" value="basic-user" readonly/></div></div>
-      <div class="field"><label>Claims</label><textarea id="claims" spellcheck="false"></textarea></div>
+      <div class="field"><label>Claims <span style="font-weight:400;color:#70789b">— set a claim to null to drop a preset default</span></label><textarea id="claims" spellcheck="false"></textarea></div>
       <div class="toolbar"><label class="switch"><input id="advanced" type="checkbox"/> Advanced: allow iss / iat / exp / nbf / jti overrides</label></div>
     </div></section>
     <section class="panel"><div class="panel-head"><h2>Issued token</h2><button class="button small ghost" id="copyBtn" disabled>Copy JWT</button></div><div class="panel-body" id="result"><div class="result-empty"><div><div style="font-size:27px;margin-bottom:10px">◈</div>Issue a token to inspect the JWT and copy it into your test.</div></div></section>

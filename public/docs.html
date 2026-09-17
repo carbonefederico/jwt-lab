@@ -14,7 +14,15 @@ Content-Type: application/json
   },
   "expiresIn": 3600
 }</pre>
-<p>Preset claims are applied first; explicit <span class="mono">claims</span> override them. The service manages <span class="mono">iss</span>, <span class="mono">iat</span>, <span class="mono">exp</span> and <span class="mono">jti</span> unless <span class="mono">advanced: true</span> is supplied.</p>
+<p>Preset claims are applied first; explicit <span class="mono">claims</span> override them, and a claim set to <span class="mono">null</span> drops the preset default. The service manages <span class="mono">iss</span>, <span class="mono">iat</span>, <span class="mono">exp</span> and <span class="mono">jti</span> unless <span class="mono">advanced: true</span> is supplied.</p>
+<h2>Preset categories</h2>
+<p><strong>Core</strong> — user and workload (<span class="mono">client_credentials</span>-shaped) access tokens. <strong>MCP</strong> — tokens audience-bound to an MCP server per the MCP authorization spec, with <span class="mono">sub</span> for the principal and <span class="mono">client_id</span> for the OAuth client. <strong>Delegation</strong> — RFC 8693 token-exchange output shapes with <span class="mono">act</span> chains: authorize on <span class="mono">sub</span> plus the outermost actor only.</p>
+<p><strong>Token profiles</strong> — spec-shaped tokens with their mandated <span class="mono">typ</span> headers set automatically:</p>
+<pre>rfc9068-access-token → typ: at+jwt            (required: iss, exp, aud, sub, client_id, iat, jti)
+spiffe-jwt-svid      → SPIFFE JWT-SVID        (sub is a SPIFFE ID; 5-minute lifetime; only sub, aud, exp required)
+transaction-token    → typ: txntoken+jwt      (required: txn, sub, aud=trust domain, scope, req_wl)
+id-jag               → typ: oauth-id-jag+jwt  (aud is the resource authorization server; client_id required)</pre>
+<p><strong>Negative tests</strong> — validly signed tokens a conforming resource server must reject: insufficient scope (expect 403 <span class="mono">insufficient_scope</span>, RFC 6750), wrong audience, wrong issuer, expired and not-yet-valid (expect 401 <span class="mono">invalid_token</span>; introspection returns <span class="mono">active: false</span>). <strong>Edge cases</strong> — multi-valued <span class="mono">aud</span> arrays.</p>
 <h2>Discovery & validation</h2><pre>GET /.well-known/jwks.json
 GET /.well-known/oauth-authorization-server
 GET /.well-known/openid-configuration
