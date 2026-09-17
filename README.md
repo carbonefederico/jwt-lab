@@ -4,7 +4,7 @@ When I build or test something that consumes tokens (an API, a gateway, an MCP s
 
 Real identity providers can do this, but they are heavy when the IdP is only a dependency. Issuing a token with the claims I want usually means registering clients, configuring signing keys and mappings, and having the environment reachable. That is worth it when I am testing the IdP itself. It is slow when what I actually want to test is the resource server, the gateway policy, or how an agent handles an actor chain.
 
-JWT Lab is a test token mint: submit claims, receive a correctly signed RS256 JWT, and validate it against the published JWKS. It is deliberately not an authorization server. There are no grants, no sign-in, no consent, no client registration. Tokens are stateless and the issuer never sees who requested them.
+JWT Lab is a minimal token issuer that plays the role an identity provider plays in token-based testing. You supply the claims you need — subject, audience, scopes, delegation — and it signs them into a real RS256 JWT with a stable key and kid, publishing the matching JWKS so a resource server can validate the token exactly the way it would validate an IdP-issued one. Everything else an IdP does is intentionally absent: no grant flows, no sign-in, no consent, no client registration. Tokens are stateless, and the issuer never sees who requested them.
 
 **Live instance: [https://jwt-lab-beta.vercel.app](https://jwt-lab-beta.vercel.app)** (hosted on Vercel; the code is host-agnostic and runs anywhere Node does).
 

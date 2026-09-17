@@ -226,12 +226,12 @@ async function runChecks() {
   return results.filter((r) => !r.ok);
 }
 
+let spawned = null;
 try {
-  let child = null;
   if (!BASE) {
-    const started = await startServer();
-    child = started.child;
-    BASE = started.base;
+    const { child, base } = await startServer();
+    spawned = child;
+    BASE = base;
   }
   console.log(`JWT Lab smoke test — target: ${BASE}`);
   const failed = await runChecks();
@@ -241,9 +241,11 @@ try {
     console.log('\nFailed checks:');
     for (const f of failed) console.log(`  ✗ ${f.name}${f.detail ? ` — ${f.detail}` : ''}`);
   }
-  child?.kill();
   process.exitCode = failed.length === 0 ? 0 : 1;
 } catch (error) {
   console.error(`smoke test failed to run: ${error.message}`);
   process.exitCode = 1;
+} finally {
+  // Unconditional: a spawned server must never outlive the test run.
+  spawned?.kill();
 }
