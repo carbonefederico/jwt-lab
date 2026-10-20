@@ -105,6 +105,14 @@ textarea { min-height:430px; resize:vertical; line-height:1.55; font-size:14px; 
 .token-box { word-break:break-all; border:1px solid var(--border); background:#090d1c; padding:13px; border-radius:10px; color:#b8c5ff; font-size:12.5px; line-height:1.5; max-height:190px; overflow:auto; }
 .result-block { margin-top:13px; }.result-block h4{font-size:12px;color:#8991b7;text-transform:uppercase;letter-spacing:.09em;margin:0 0 7px}.result-block pre{margin:0;background:#090d1c;border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto;color:#d9def6;font-size:12.5px;line-height:1.5;max-height:220px}
 .notice { padding:11px 13px;border:1px solid rgba(255,112,141,.22);background:rgba(255,112,141,.06);border-radius:10px;color:#d4a8b3;font-size:12.5px;line-height:1.5;margin-bottom:14px }
+.issuer-info { display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px; }
+@media(max-width:720px){.issuer-info{grid-template-columns:1fr}}
+.issuer-item { display:flex;align-items:center;gap:9px;border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:10px 13px;min-width:0; }
+.issuer-label { font-size:11px;color:#8991b7;text-transform:uppercase;letter-spacing:.09em;font-weight:700;white-space:nowrap; }
+.issuer-value { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:#b9c6ff; }
+.issuer-value:hover { color:#d7e0ff; }
+.copy-mini { border:1px solid var(--border);background:rgba(255,255,255,.03);color:#aab0cd;border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:600;cursor:pointer;transition:.15s ease;white-space:nowrap; }
+.copy-mini:hover { border-color:rgba(255,255,255,.22);color:white; }
 .docs { max-width:900px; margin:0 auto; padding:55px 24px 90px; }.docs h1{font-size:46px;letter-spacing:-.04em}.docs h2{margin-top:42px}.docs p,.docs li{color:var(--muted);line-height:1.65}.docs pre{background:#0b0f20;border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;color:#d9def6;line-height:1.55}
 @media(max-width:1000px){.hero{grid-template-columns:1fr;padding-top:60px}.hero h1{font-size:55px}.grid3{grid-template-columns:1fr 1fr}.app-grid{grid-template-columns:1fr}}
 @media(max-width:720px){.navlinks a:not(.button){display:none}.hero h1{font-size:46px}.grid3{grid-template-columns:1fr}.app-grid{grid-template-columns:1fr}.app-grid>.panel:last-child{grid-column:auto}.demo-strip,.footer,.app-header{align-items:flex-start;flex-direction:column}.trustline{flex-direction:column;gap:8px}}

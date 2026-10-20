@@ -2,10 +2,20 @@ const state = { presets: [], active: null, token: null };
 const el = (id) => document.getElementById(id);
 const EMPTY_RESULT = '<div class="result-empty"><div><div style="font-size:27px;margin-bottom:10px">◈</div>Issue a token to inspect the JWT and copy it into your test.</div></div>';
 
+// The strip above the grid: this deployment's JWKS endpoint and the iss
+// stamped into every token it issues (JWT_ISSUER if set, else request origin).
+function setIssuerInfo(issuer) {
+  const jwksUrl = `${issuer}/.well-known/jwks.json`;
+  el('jwksUrl').textContent = jwksUrl;
+  el('jwksUrl').href = jwksUrl;
+  el('defaultIss').textContent = issuer;
+}
+
 async function loadPresets() {
   const response = await fetch('/api/presets');
   const data = await response.json();
   state.presets = data.presets;
+  setIssuerInfo((await (await fetch('/api/health')).json()).issuer);
   el('presetCount').textContent = `${state.presets.length} scenarios`;
   renderPresets();
   selectPreset('basic-user');
@@ -46,6 +56,11 @@ function selectPreset(id) {
   el('copyBtn').disabled = true;
   el('result').innerHTML = EMPTY_RESULT;
   renderPresets();
+}
+
+async function copyText(text, button, label = 'Copy') {
+  await navigator.clipboard.writeText(text);
+  button.textContent = 'Copied'; setTimeout(() => button.textContent = label, 900);
 }
 
 async function issue() {
@@ -105,7 +120,8 @@ el('resetBtn').addEventListener('click', () => {
 });
 el('copyBtn').addEventListener('click', async () => {
   if (!state.token) return;
-  await navigator.clipboard.writeText(state.token);
-  el('copyBtn').textContent = 'Copied'; setTimeout(() => el('copyBtn').textContent = 'Copy JWT', 900);
+  await copyText(state.token, el('copyBtn'), 'Copy JWT');
 });
+el('copyJwks').addEventListener('click', () => copyText(el('jwksUrl').textContent, el('copyJwks')));
+el('copyIss').addEventListener('click', () => copyText(el('defaultIss').textContent, el('copyIss')));
 loadPresets().catch((e) => showError(e.message));

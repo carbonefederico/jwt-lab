@@ -6,6 +6,10 @@
 <main class="app-shell">
   <div class="app-header"><div><h1>Token Lab</h1><p>Choose a scenario, edit the payload and mint a signed JWT.</p></div><div class="toolbar"><button class="button small ghost" id="resetBtn">Reset</button><button class="button small primary" id="issueBtn">Issue token</button></div></div>
   <div class="notice">Testing only. JWT Lab deliberately makes token issuance easy. Do not configure production systems to trust this issuer.</div>
+  <div class="issuer-info">
+    <div class="issuer-item" title="Keys a resource server fetches to validate tokens issued here."><span class="issuer-label">JWKS URL</span><a class="issuer-value" id="jwksUrl" target="_blank" rel="noopener"></a><button class="copy-mini" id="copyJwks" type="button">Copy</button></div>
+    <div class="issuer-item" title="iss claim stamped into tokens by this deployment: JWT_ISSUER if set, otherwise the request origin."><span class="issuer-label">Default issuer</span><code class="issuer-value" id="defaultIss"></code><button class="copy-mini" id="copyIss" type="button">Copy</button></div>
+  </div>
   <div class="app-grid">
     <section class="panel"><div class="panel-head"><h2>JWT payload</h2><span class="mono" id="presetCount"></span></div><div class="panel-body">
       <div class="field"><label>Preset <span style="font-weight:400;color:#70789b">— hover a name for details</span></label><div class="chips" id="presets"></div></div>
