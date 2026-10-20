@@ -6,11 +6,15 @@ Real identity providers can do this, but they are heavy when the IdP is only a d
 
 JWT Lab is a minimal token issuer that plays the role an identity provider plays in token-based testing. You supply the claims you need — subject, audience, scopes, delegation — and it signs them into a real RS256 JWT with a stable key and kid, publishing the matching JWKS so a resource server can validate the token exactly the way it would validate an IdP-issued one. Everything else an IdP does is intentionally absent: no grant flows, no sign-in, no consent, no client registration. Tokens are stateless, and the issuer never sees who requested them.
 
-**Live instance: [https://jwt-lab-beta.vercel.app](https://jwt-lab-beta.vercel.app)** (hosted on Vercel; the code is host-agnostic and runs anywhere Node does).
+It provides the following: 
 
 - Web UI: pick a preset scenario, edit the claims JSON, mint a token, copy it.
 - REST API: POST /api/token for scripted and CI-driven tests, plus RFC 7662 introspection.
 - MCP server: five tools so an agent can issue and introspect tokens itself.
+
+## Live Deployment 
+
+**Live instance: [https://jwt-lab-beta.vercel.app](https://jwt-lab-beta.vercel.app)** 
 
 ## Local development
 
