@@ -73,9 +73,9 @@ app.post('/oauth/token', async (req, res) => {
   const basic = req.get('authorization');
 
   // One JSON line per request: every form param, the raw inbound tokens,
-  // their decoded claims, and the outcome. client_secret and the
-  // Authorization header are masked.
-  const log = (outcome) => {
+  // their decoded claims, the issued token's claims, and the outcome.
+  // client_secret and the Authorization header are masked.
+  const log = (outcome, issuedClaims) => {
     const params = {};
     const decoded = {};
     for (const [key, value] of new URLSearchParams(rawBody)) {
@@ -91,13 +91,21 @@ app.post('/oauth/token', async (req, res) => {
       authorization: basic ? '[masked]' : undefined,
       request: params,
       token_claims: decoded,
+      ...(issuedClaims !== undefined ? { issued_token_claims: issuedClaims } : {}),
       outcome
     }));
   };
 
   try {
-    const result = await exchangeToken(rawBody, { origin: originOf(req) });
-    log({ status: 200 });
+    // Basic auth (RFC 6749 §2.3.1) is the conventional client auth; its
+    // username acts as client_id when no form client_id was sent.
+    let basicClientId;
+    if (basic?.startsWith('Basic ')) {
+      try { basicClientId = Buffer.from(basic.slice(6), 'base64').toString('utf8').split(':')[0] || undefined; }
+      catch { /* malformed header: ignored, auth is unvalidated anyway */ }
+    }
+    const result = await exchangeToken(rawBody, { origin: originOf(req), basicClientId });
+    log({ status: 200 }, result.decoded.payload);
     res.set('Cache-Control', 'no-cache, no-store');
     res.json(result);
   } catch (error) {

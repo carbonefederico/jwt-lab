@@ -64,7 +64,7 @@ function buildAct(subjectClaims, actorClaims) {
   return Object.keys(outer).length > 0 ? outer : undefined;
 }
 
-export async function exchangeToken(rawBody, { origin } = {}) {
+export async function exchangeToken(rawBody, { origin, basicClientId } = {}) {
   const params = parseForm(rawBody);
 
   if (params.grant_type === undefined) {
@@ -107,7 +107,14 @@ export async function exchangeToken(rawBody, { origin } = {}) {
     ...structuredClone(subject.claims),
     ...(aud !== undefined ? { aud } : {}),
     ...(scope !== undefined ? { scope } : {}),
-    ...(typeof params.client_id === 'string' ? { client_id: params.client_id } : {})
+    // Form client_id wins; the Basic auth username is the fallback. The
+    // secret is never read anywhere.
+    ...(() => {
+      const clientId = typeof params.client_id === 'string' && params.client_id !== ''
+        ? params.client_id
+        : (typeof basicClientId === 'string' && basicClientId !== '' ? basicClientId : undefined);
+      return clientId !== undefined ? { client_id: clientId } : {};
+    })()
   };
   if (claims.sub === undefined) {
     throw new ExchangeError('invalid_request', 'The subject token carries no "sub" claim.');
