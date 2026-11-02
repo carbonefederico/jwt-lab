@@ -1,8 +1,10 @@
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { decodeJwt } from 'jose';
 import { issueToken, resolveIssuer } from './token.js';
 import { introspectToken } from './introspect.js';
+import { exchangeToken, ExchangeError } from './exchange.js';
 import { getKeyMaterial } from './keys.js';
 import { presets } from './presets.js';
 import { handleMcp } from './mcp.js';
@@ -13,7 +15,12 @@ const publicDir = path.resolve(__dirname, '../public');
 export const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '256kb' }));
-app.use(express.urlencoded({ extended: false }));
+// Keep a copy of the raw form body: /oauth/token needs repeated params
+// (audience/resource) that the parsed object collapses.
+app.use(express.urlencoded({
+  extended: false,
+  verify: (req, _res, buf) => { req.rawBody = buf.toString('utf8'); }
+}));
 
 // Behind proxies (serverless, gateways) the public scheme lives in
 // x-forwarded-proto; otherwise use the request protocol.
@@ -56,6 +63,54 @@ app.post('/api/introspect', async (req, res) => {
   res.json(await introspectToken(token));
 });
 
+// RFC 8693 token exchange. Raw body is kept because express.urlencoded
+// collapses repeated audience/resource params, which the grant allows.
+// Full request logging is a feature here (see README): inbound tokens and
+// their claims go to stdout as JSON lines, with secrets masked.
+app.post('/oauth/token', async (req, res) => {
+  const startedAt = new Date().toISOString();
+  const rawBody = req.rawBody ?? '';
+  const basic = req.get('authorization');
+
+  // One JSON line per request: every form param, the raw inbound tokens,
+  // their decoded claims, and the outcome. client_secret and the
+  // Authorization header are masked.
+  const log = (outcome) => {
+    const params = {};
+    const decoded = {};
+    for (const [key, value] of new URLSearchParams(rawBody)) {
+      params[key] = key === 'client_secret' ? '[masked]' : value;
+      if (key === 'subject_token' || key === 'actor_token') {
+        try { decoded[key] = decodeJwt(value); } catch { decoded[key] = '[undecodable]'; }
+      }
+    }
+    console.log(JSON.stringify({
+      timestamp: startedAt,
+      endpoint: 'POST /oauth/token',
+      client_auth: basic ? 'basic' : (params.client_id ? 'client_secret_post' : 'none'),
+      authorization: basic ? '[masked]' : undefined,
+      request: params,
+      token_claims: decoded,
+      outcome
+    }));
+  };
+
+  try {
+    const result = await exchangeToken(rawBody, { origin: originOf(req) });
+    log({ status: 200 });
+    res.set('Cache-Control', 'no-cache, no-store');
+    res.json(result);
+  } catch (error) {
+    const status = error instanceof ExchangeError ? 400 : 500;
+    const body = error instanceof ExchangeError
+      ? { error: error.code, error_description: error.message }
+      : { error: 'server_error', error_description: error.message };
+    log({ status, error: body });
+    if (!(error instanceof ExchangeError)) console.error('[exchange]', error);
+    res.status(status).set('Cache-Control', 'no-cache, no-store').json(body);
+  }
+});
+
 app.get('/.well-known/jwks.json', async (_req, res, next) => {
   try {
     const { publicJwk } = await getKeyMaterial();
@@ -72,14 +127,16 @@ app.get('/.well-known/oauth-authorization-server', (req, res) => {
     issuer,
     jwks_uri: `${issuer}/.well-known/jwks.json`,
     introspection_endpoint: `${issuer}/api/introspect`,
+    token_endpoint: `${issuer}/oauth/token`,
+    grant_types_supported: ['urn:ietf:params:oauth:grant-type:token-exchange'],
     scopes_supported: ['openid', 'profile', 'email', 'offline_access'],
-    token_endpoint_auth_methods_supported: [],
+    token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'],
     id_token_signing_alg_values_supported: ['RS256'],
     jwt_lab: {
       token_issuance_api: `${issuer}/api/token`,
       presets_api: `${issuer}/api/presets`,
       mcp_endpoint: `${issuer}/mcp`,
-      note: 'JWT Lab intentionally does not implement OAuth authorization or grant flows.'
+      note: 'JWT Lab intentionally does not implement OAuth authorization or grant flows other than RFC 8693 token exchange.'
     }
   });
 });

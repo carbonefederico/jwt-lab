@@ -4,12 +4,13 @@ When I build or test something that consumes tokens (an API, a gateway, an MCP s
 
 Real identity providers can do this, but they are heavy when the IdP is only a dependency. Issuing a token with the claims I want usually means registering clients, configuring signing keys and mappings, and having the environment reachable. That is worth it when I am testing the IdP itself. It is slow when what I actually want to test is the resource server, the gateway policy, or how an agent handles an actor chain.
 
-JWT Lab is a minimal token issuer that plays the role an identity provider plays in token-based testing. You supply the claims you need — subject, audience, scopes, delegation — and it signs them into a real RS256 JWT with a stable key and kid, publishing the matching JWKS so a resource server can validate the token exactly the way it would validate an IdP-issued one. Everything else an IdP does is intentionally absent: no grant flows, no sign-in, no consent, no client registration. Tokens are stateless, and the issuer never sees who requested them.
+JWT Lab is a minimal token issuer that plays the role an identity provider plays in token-based testing. You supply the claims you want — subject, audience, scopes, delegation — and it signs them into a real RS256 JWT with a stable key and kid, publishing the matching JWKS so a resource server can validate the token exactly the way it would validate an IdP-issued one. Everything else an IdP does is intentionally absent: no grant flows (except an RFC 8693 token exchange), no sign-in, no consent, no client registration. Tokens are stateless, and the presets API never sees who requested them.
 
 It provides the following: 
 
 - Web UI: pick a preset scenario, edit the claims JSON, mint a token, copy it.
 - REST API: POST /api/token for scripted and CI-driven tests, plus RFC 7662 introspection.
+- Token exchange: POST /oauth/token speaks RFC 8693 — trade a subject (and optional actor) token for a delegated JWT.
 - MCP server: five tools so an agent can issue and introspect tokens itself.
 
 ## Live Deployment 
@@ -55,6 +56,26 @@ curl https://your-lab.example.com/api/token \
     }
   }'
 ```
+
+## Token exchange (RFC 8693)
+
+```bash
+curl https://your-lab.example.com/oauth/token \
+  -d 'grant_type=urn:ietf:params:oauth:grant-type:token-exchange' \
+  --data-urlencode 'subject_token=eyJhbGciOiJSUzI1NiIs...' \
+  -d 'subject_token_type=urn:ietf:params:oauth:token-type:jwt' \
+  --data-urlencode 'actor_token=eyJhbGciOiJSUzI1NiIs...' \
+  -d 'actor_token_type=urn:ietf:params:oauth:token-type:jwt' \
+  -d 'audience=https://api.example.com' \
+  -d 'scope=portfolio.read' \
+  -u 'any-client:any-secret'
+```
+
+The issued JWT embeds the subject token's claims with the actor token's claims under `act` (prior `act` chains nest beneath the new outermost actor, per the RFC's Figure 6). `audience`/`resource`/`scope` params, when present, override the values embedded in the subject token; otherwise those carry over. Client credentials are accepted from anyone and never validated — `client_id` is stamped into the token as a claim, the secret never leaves the request. Inbound tokens are decoded, never validated: no signature, expiry or issuer checks.
+
+Lab deviations from the RFC, by design: inbound tokens are not validated (§2.1), client authentication is unauthenticated (§2.1 leaves this to deployment policy), and the output token's lifetime is the lab's fixed TTL rather than being influenced by the input tokens.
+
+**This endpoint logs everything**: every exchange request is written to the server output as one JSON line — all form parameters, the raw inbound tokens, their decoded claims, and the response outcome. Only `client_secret` and the Authorization header are masked. Do not send tokens with claims you would not want in your logs.
 
 ## MCP
 

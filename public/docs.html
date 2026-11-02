@@ -26,14 +26,31 @@ id-jag               → typ: oauth-id-jag+jwt  (aud is the resource authorizati
 <h2>Discovery & validation</h2><pre>GET /.well-known/jwks.json
 GET /.well-known/oauth-authorization-server
 GET /.well-known/openid-configuration
-GET /api/presets</pre>
-<h2>Introspect a token</h2><pre>POST /api/introspect
+GET /api/presets</pre><h2>Introspect a token</h2><pre>POST /api/introspect
 Content-Type: application/x-www-form-urlencoded
 
 token=eyJhbGciOiJSUzI1NiIs...
 
 {"active": true, "sub": "alice", "exp": 1767225600, ...}</pre>
 <p>RFC 7662 token introspection: JWT Lab verifies the signature (<span class="mono">RS256</span> against its published JWKS) and <span class="mono">exp</span>/<span class="mono">nbf</span> itself and returns an OAuth introspection response. Invalid, expired, tampered or malformed tokens return <span class="mono">{"active": false}</span> with no claim echo. The endpoint is unauthenticated: tokens are public-key-signed JWTs anyone holding them can decode, so introspection adds only the issuer's live validity opinion. Because JWT Lab is stateless, it can never report a valid token as revoked.</p>
+<h2>Token exchange (RFC 8693)</h2>
+<pre>POST /oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Atoken-exchange
+&amp;subject_token=&lt;JWT&gt;
+&amp;subject_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
+&amp;actor_token=&lt;JWT&gt;
+&amp;actor_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Ajwt
+&amp;audience=https%3A%2F%2Fapi.example.com
+&amp;scope=profile.read</pre>
+<p>A spec-shaped token exchange: the subject token's claims are embedded in the issued JWT, and the actor token's claims become the <span class="mono">act</span> claim. Clients authenticate with any <span class="mono">client_id</span>/<span class="mono">client_secret</span> (HTTP Basic or form params) — credentials are accepted but never validated, and <span class="mono">client_id</span> is stamped into the token as a top-level claim.</p>
+<p>Deliberate lab behavior:</p>
+<p><strong>Inbound tokens are decoded, never validated.</strong> Signature, expiry and issuer are not checked — the tokens are embedded inputs, not proofs. A subject token with no <span class="mono">sub</span> claim is rejected with <span class="mono">invalid_request</span>.</p>
+<p><strong>Delegation chains compose.</strong> If the subject token carries an <span class="mono">act</span> claim, it nests beneath the new outermost actor per RFC 8693 Figure 6, so history is preserved. Claims inside <span class="mono">act</span> are the actor's identity claims; <span class="mono">exp</span>/<span class="mono">nbf</span>/<span class="mono">aud</span> are stripped there per §4.1.</p>
+<p><strong>Request params win.</strong> <span class="mono">audience</span> and <span class="mono">resource</span> (repeatable) override the embedded <span class="mono">aud</span>; <span class="mono">scope</span> overrides the embedded scope. Omitted, the embedded values carry over; with neither, <span class="mono">aud</span> is left off. A <span class="mono">resource</span> that is not an absolute URI or carries a fragment is rejected with <span class="mono">invalid_target</span>.</p>
+<p><strong>Fixed lifetime.</strong> <span class="mono">iss</span>, <span class="mono">iat</span>, <span class="mono">exp</span> (JWT_DEFAULT_TTL, default 3600s) and <span class="mono">jti</span> are stamped by the lab; the inbound tokens' claims never drive the output expiry.</p>
+<p>Errors are OAuth error codes: <span class="mono">invalid_request</span> for malformed requests and undecodable tokens, <span class="mono">unsupported_grant_type</span> for any grant other than the exchange URN, <span class="mono">invalid_target</span> for malformed resources. <strong>Every request is logged to the server output as one JSON line</strong> — form parameters, raw inbound tokens, their decoded claims and the outcome — with <span class="mono">client_secret</span> and the Authorization header masked. If your tokens carry sensitive claims, remember they will appear in the logs.</p>
 <h2>MCP</h2><p>Connect an MCP client to <span class="mono">&lt;your-lab-host&gt;/mcp</span>. The remote server exposes five tools:</p><pre>issue_token
 introspect_token
 list_presets

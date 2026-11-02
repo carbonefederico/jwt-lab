@@ -190,6 +190,115 @@ async function runChecks() {
   assert((await json(await post('/api/introspect', { token: 'not-a-jwt' }, 'application/x-www-form-urlencoded'))).active === false, 'garbage token introspects inactive');
   assert((await post('/api/introspect', {}, 'application/x-www-form-urlencoded')).status === 400, 'introspect without token returns 400');
 
+  // ---- RFC 8693 token exchange ----
+  section('API: /oauth/token (RFC 8693)');
+  const EXCHANGE = 'urn:ietf:params:oauth:grant-type:token-exchange';
+  const JWT_URN = 'urn:ietf:params:oauth:token-type:jwt';
+  const mintFor = async (claims) => (await json(await post('/api/token', { claims }))).access_token;
+  const b64url = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const unsigned = (claims) => `${b64url({ alg: 'RS256', typ: 'JWT' })}.${b64url(claims)}.`; // undecodable-signature JWT is fine: decoded, never verified
+
+  const subjectClaims = {
+    iss: 'https://id.example', sub: 'alice', aud: 'https://api.example.com',
+    scope: 'profile.read', exp: Math.floor(Date.now() / 1000) + 60, may_act: { sub: 'agent-1' }
+  };
+  const actorClaims = { iss: 'https://id.example', sub: 'agent-1', aud: 'https://as.example', exp: Math.floor(Date.now() / 1000) + 60 };
+
+  const exchangeForm = (params) => post('/oauth/token', new URLSearchParams(params).toString(), 'application/x-www-form-urlencoded');
+  const ex = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    subject_token: unsigned(subjectClaims),
+    subject_token_type: JWT_URN,
+    actor_token: unsigned(actorClaims),
+    actor_token_type: JWT_URN
+  }));
+  const exPayload = ex.decoded?.payload ?? {};
+  assert(ex.access_token?.split('.').length === 3 && ex.issued_token_type === JWT_URN && ex.token_type === 'Bearer', 'exchange returns OAuth envelope with 3-part JWT');
+  assert(exPayload.sub === 'alice' && exPayload.scope === 'profile.read', 'subject claims carried into issued token');
+  assert(exPayload.act?.sub === 'agent-1' && exPayload.act?.exp === undefined && exPayload.act?.aud === undefined, 'act = actor identity claims; exp/aud stripped per §4.1');
+  assert(exPayload.iss === issuer && exPayload.exp - exPayload.iat === 3600, 'iss/iat/exp re-stamped by the lab (fixed TTL, not inherited)');
+
+  // Subject act chain preserved beneath the new actor (RFC 8693 Figure 6).
+  const chained = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    subject_token: unsigned({ ...subjectClaims, act: { sub: 'orchestrator', act: { sub: 'oldest' } } }),
+    subject_token_type: JWT_URN,
+    actor_token: unsigned(actorClaims),
+    actor_token_type: JWT_URN
+  }));
+  const act = chained.decoded?.payload?.act;
+  assert(act?.sub === 'agent-1' && act?.act?.sub === 'orchestrator' && act?.act?.act?.sub === 'oldest', 'subject act chain nests beneath the new outermost actor');
+
+  // audience/scope/resource params override embedded values (§2.1.1).
+  const overridden = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    audience: 'urn:example:one',
+    resource: 'https://backend.example/api',
+    scope: 'payments.read',
+    subject_token: unsigned(subjectClaims),
+    subject_token_type: JWT_URN
+  }));
+  assert(Array.isArray(overridden.decoded?.payload?.aud) && overridden.decoded.payload.aud.join(',') === 'urn:example:one,https://backend.example/api', 'audience + resource params combine into aud array');
+  assert(overridden.decoded?.payload?.scope === 'payments.read' && overridden.scope === 'payments.read', 'scope param overrides embedded scope and echoes in response');
+  assert(overridden.decoded?.payload?.act === undefined, 'no act claim when no actor token and subject has none');
+
+  // Fall back to embedded aud when no audience params (already covered by ex).
+  assert(exPayload.aud === 'https://api.example.com', 'embedded aud kept when request has no audience/resource');
+
+  const clientTagged = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    client_id: 'my-client',
+    client_secret: 'whatever',
+    subject_token: unsigned(subjectClaims),
+    subject_token_type: JWT_URN
+  }));
+  assert(clientTagged.decoded?.payload?.client_id === 'my-client' && !JSON.stringify(clientTagged.decoded.payload).includes('whatever'), 'client_id becomes top-level claim; secret never appears');
+
+  const noActorType = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    subject_token: unsigned(subjectClaims),
+    subject_token_type: JWT_URN,
+    actor_token: unsigned(actorClaims)
+  }));
+  assert(noActorType.error === 'invalid_request' && /actor_token_type/.test(noActorType.error_description), 'actor_token without actor_token_type rejected');
+
+  const orphanType = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    subject_token: unsigned(subjectClaims),
+    subject_token_type: JWT_URN,
+    actor_token_type: JWT_URN
+  }));
+  assert(orphanType.error === 'invalid_request' && /must not/.test(orphanType.error_description), 'actor_token_type without actor_token rejected');
+
+  const wrongGrant = await json(await exchangeForm({
+    grant_type: 'client_credentials', subject_token: unsigned(subjectClaims), subject_token_type: JWT_URN
+  }));
+  assert(wrongGrant.error === 'unsupported_grant_type', 'wrong grant_type rejected with unsupported_grant_type');
+
+  const missingGrant = await json(await post('/oauth/token', 'subject_token=x&subject_token_type=jwt', 'application/x-www-form-urlencoded'));
+  assert(missingGrant.error === 'invalid_request' && /grant_type/.test(missingGrant.error_description), 'missing grant_type rejected with invalid_request');
+
+  const garbage = await json(await exchangeForm({
+    grant_type: EXCHANGE, subject_token: 'not-a-jwt', subject_token_type: JWT_URN
+  }));
+  assert(garbage.error === 'invalid_request' && /decodable/.test(garbage.error_description), 'undecodable subject_token rejected');
+
+  const badResource = await json(await exchangeForm({
+    grant_type: EXCHANGE, resource: 'https://backend.example/api#frag',
+    subject_token: unsigned(subjectClaims), subject_token_type: JWT_URN
+  }));
+  assert(badResource.error === 'invalid_target', 'resource with fragment rejected with invalid_target');
+
+  const basicAuth = await fetch(`${BASE}/oauth/token`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: 'Basic ' + Buffer.from('my-client:secret').toString('base64') },
+    body: new URLSearchParams({ grant_type: EXCHANGE, subject_token: unsigned(subjectClaims), subject_token_type: JWT_URN }),
+    signal: AbortSignal.timeout(TIMEOUT)
+  });
+  assert(basicAuth.status === 200 && (await basicAuth.json()).access_token, 'HTTP Basic client auth accepted (unvalidated)');
+
+  assert((await json(await post('/api/introspect', { token: ex.access_token }, 'application/x-www-form-urlencoded'))).active === true, 'exchanged token introspects active');
+
   // ---- static & CORS ----
   section('Static & CORS');
   assert((await get('/')).status === 200, 'landing page serves');
