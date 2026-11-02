@@ -71,7 +71,7 @@ curl https://your-lab.example.com/oauth/token \
   -u 'any-client:any-secret'
 ```
 
-The issued JWT embeds the subject token's claims with the actor token's claims under `act` (prior `act` chains nest beneath the new outermost actor, per the RFC's Figure 6). `audience`/`resource`/`scope` params, when present, override the values embedded in the subject token; otherwise those carry over. Client credentials are accepted from anyone and never validated — `client_id` is stamped into the token as a claim, the secret never leaves the request. Inbound tokens are decoded, never validated: no signature, expiry or issuer checks.
+The issued JWT embeds the subject token's claims with the actor token's claims under `act` (prior `act` chains nest beneath the new outermost actor, per the RFC's Figure 6). With no `actor_token`, the exchanging client is the acting party: its `client_id` becomes `act.sub`. `audience`/`resource`/`scope` params, when present, override the values embedded in the subject token; otherwise those carry over. Client credentials are accepted from anyone and never validated — `client_id` is stamped into the token as a claim, the secret never leaves the request. Inbound tokens are decoded, never validated: no signature, expiry or issuer checks.
 
 Lab deviations from the RFC, by design: inbound tokens are not validated (§2.1), client authentication is unauthenticated (§2.1 leaves this to deployment policy), and the output token's lifetime is the lab's fixed TTL rather than being influenced by the input tokens.
 

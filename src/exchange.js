@@ -48,10 +48,18 @@ function identityClaims(claims) {
 // the actor token's identity claims — goes outermost; prior chains nest
 // beneath, least recent deepest. The actor token's own act chain keeps its
 // place directly beneath the actor's identity, and the subject token's act
-// chain appends at the deepest point so no history is dropped.
-function buildAct(subjectClaims, actorClaims) {
+// chain appends at the deepest point so no history is dropped. Lab rule:
+// with no actor token, the exchanging client is the acting party, so its
+// client_id becomes the outermost act.sub.
+function buildAct(subjectClaims, actorClaims, clientId) {
   const subjectChain = subjectClaims.act ? structuredClone(subjectClaims.act) : undefined;
-  if (!actorClaims) return subjectChain;
+  if (!actorClaims) {
+    if (subjectChain && clientId !== undefined) {
+      return { sub: clientId, act: subjectChain };
+    }
+    if (clientId !== undefined) return { sub: clientId };
+    return subjectChain;
+  }
 
   const outer = identityClaims(structuredClone(actorClaims));
   if (outer.act && subjectChain) {
@@ -103,23 +111,22 @@ export async function exchangeToken(rawBody, { origin, basicClientId } = {}) {
   const aud = audiences.length > 0 ? (audiences.length > 1 ? audiences : audiences[0]) : subject.claims.aud;
   const scope = typeof params.scope === 'string' ? params.scope : subject.claims.scope;
 
+  // Form client_id wins; the Basic auth username is the fallback. The
+  // secret is never read anywhere.
+  const clientId = typeof params.client_id === 'string' && params.client_id !== ''
+    ? params.client_id
+    : (typeof basicClientId === 'string' && basicClientId !== '' ? basicClientId : undefined);
+
   const claims = {
     ...structuredClone(subject.claims),
     ...(aud !== undefined ? { aud } : {}),
     ...(scope !== undefined ? { scope } : {}),
-    // Form client_id wins; the Basic auth username is the fallback. The
-    // secret is never read anywhere.
-    ...(() => {
-      const clientId = typeof params.client_id === 'string' && params.client_id !== ''
-        ? params.client_id
-        : (typeof basicClientId === 'string' && basicClientId !== '' ? basicClientId : undefined);
-      return clientId !== undefined ? { client_id: clientId } : {};
-    })()
+    ...(clientId !== undefined ? { client_id: clientId } : {})
   };
   if (claims.sub === undefined) {
     throw new ExchangeError('invalid_request', 'The subject token carries no "sub" claim.');
   }
-  const act = buildAct(subject.claims, actorClaims);
+  const act = buildAct(subject.claims, actorClaims, clientId);
   if (act !== undefined) claims.act = act;
 
   const keyMaterial = await getKeyMaterial();

@@ -35,9 +35,10 @@ async function startServer() {
   const port = await freePort();
   // Boot src/app.js directly rather than src/local.js so a local .env file
   // cannot skew issuer expectations. JWT_ISSUER is cleared so the issuer
-  // resolves from the request origin.
+  // resolves from the request origin. The SIGTERM handler exits cleanly so
+  // a NODE_V8_COVERAGE run flushes the server process's coverage to disk.
   const env = { ...process.env, PORT: String(port), JWT_ISSUER: '' };
-  const child = spawn(process.execPath, ['-e', "import('./src/app.js').then(({app}) => app.listen(Number(process.env.PORT), '127.0.0.1'))"], {
+  const child = spawn(process.execPath, ['-e', "process.on('SIGTERM', () => process.exit(0)); import('./src/app.js').then(({app}) => app.listen(Number(process.env.PORT), '127.0.0.1'))"], {
     cwd: fileURLToPath(new URL('..', import.meta.url)),
     env,
     stdio: 'ignore'
@@ -253,6 +254,23 @@ async function runChecks() {
     subject_token_type: JWT_URN
   }));
   assert(clientTagged.decoded?.payload?.client_id === 'my-client' && !JSON.stringify(clientTagged.decoded.payload).includes('whatever'), 'client_id becomes top-level claim; secret never appears');
+
+  // No actor token: the exchanging client acts, its client_id as act.sub.
+  const clientAsActor = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    client_id: 'acting-client',
+    subject_token: unsigned(subjectClaims),
+    subject_token_type: JWT_URN
+  }));
+  assert(clientAsActor.decoded?.payload?.act?.sub === 'acting-client', 'no actor token: client_id becomes act.sub');
+  const clientAsActorChained = await json(await exchangeForm({
+    grant_type: EXCHANGE,
+    client_id: 'acting-client',
+    subject_token: unsigned({ ...subjectClaims, act: { sub: 'prior-actor' } }),
+    subject_token_type: JWT_URN
+  }));
+  const clientAct = clientAsActorChained.decoded?.payload?.act;
+  assert(clientAct?.sub === 'acting-client' && clientAct?.act?.sub === 'prior-actor', 'no actor token: client act nests subject chain beneath');
 
   const noActorType = await json(await exchangeForm({
     grant_type: EXCHANGE,
